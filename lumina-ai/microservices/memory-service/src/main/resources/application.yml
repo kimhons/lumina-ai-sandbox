@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: memory-service
+  datasource:
+    url: jdbc:postgresql://postgres:5432/lumina_memory
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  redis:
+    host: ${REDIS_HOST:redis}
+    port: ${REDIS_PORT:6379}
+  cloud:
+    discovery:
+      enabled: true
+
+server:
+  port: 8086
+  servlet:
+    context-path: /api/memory
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+vector:
+  store:
+    type: ${VECTOR_STORE_TYPE:pinecone}
+    pinecone:
+      api-key: ${PINECONE_API_KEY:}
+      environment: ${PINECONE_ENVIRONMENT:}
+      index: ${PINECONE_INDEX:lumina-memory}
+    weaviate:
+      url: ${WEAVIATE_URL:http://weaviate:8080}
+      api-key: ${WEAVIATE_API_KEY:}
+
+memory:
+  compression:
+    enabled: true
+    max-tokens: 8192
+    importance-threshold: 0.6
+  hierarchical:
+    enabled: true
+    max-topics: 50
+    clustering-threshold: 0.75
+  cross-session:
+    enabled: true
+    ttl-days: 30
+  retrieval:
+    cache-enabled: true
+    cache-ttl-minutes: 60
+    max-results: 20

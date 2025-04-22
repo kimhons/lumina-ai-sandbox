@@ -1,0 +1,70 @@
+spring:
+  application:
+    name: auth-service
+  datasource:
+    url: jdbc:postgresql://postgres:5432/lumina_auth
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID:google-client-id}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET:google-client-secret}
+            scope: email, profile
+          github:
+            client-id: ${OAUTH2_GITHUB_CLIENT_ID:github-client-id}
+            client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET:github-client-secret}
+            scope: user:email, read:user
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
+    access-token:
+      expiration: 3600 # 1 hour
+    refresh-token:
+      expiration: 2592000 # 30 days
+  mfa:
+    token:
+      expiration: 300 # 5 minutes
+    totp:
+      issuer: LuminaAI
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    diskspace:
+      enabled: true

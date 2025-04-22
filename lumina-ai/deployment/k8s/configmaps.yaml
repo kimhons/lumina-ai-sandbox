@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lumina-ai-config
+  namespace: lumina-ai
+data:
+  LUMINA_ENV: "production"
+  LUMINA_LOG_LEVEL: "info"
+  VECTOR_DB_HOST: "vector-db-service"
+  VECTOR_DB_PORT: "6333"
+  LUMINA_CORE_URL: "http://lumina-core-service:8000"
+  LUMINA_PROVIDERS_URL: "http://lumina-providers-service:8001"
+  LUMINA_MEMORY_URL: "http://lumina-memory-service:8002"
+  LUMINA_SECURITY_URL: "http://lumina-security-service:8003"

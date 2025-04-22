@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: lumina-memory-service
+  namespace: lumina-ai
+  labels:
+    app: lumina-ai
+    component: memory
+spec:
+  selector:
+    app: lumina-ai
+    component: memory
+  ports:
+    - port: 8002
+      targetPort: 8002
+      name: http
+  type: ClusterIP

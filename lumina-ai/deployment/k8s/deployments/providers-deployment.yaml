@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lumina-providers-deployment
+  namespace: lumina-ai
+  labels:
+    app: lumina-ai
+    component: providers
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lumina-ai
+      component: providers
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: lumina-ai
+        component: providers
+    spec:
+      containers:
+      - name: lumina-providers
+        image: lumina-ai/providers:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8001
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "1Gi"
+        envFrom:
+        - configMapRef:
+            name: lumina-ai-config
+        - secretRef:
+            name: lumina-ai-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8001
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8001
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: providers-data
+          mountPath: /app/data
+      volumes:
+      - name: providers-data
+        persistentVolumeClaim:
+          claimName: providers-data-pvc

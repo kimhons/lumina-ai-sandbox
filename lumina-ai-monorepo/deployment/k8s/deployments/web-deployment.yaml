@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lumina-web-deployment
+  namespace: lumina-ai
+  labels:
+    app: lumina-ai
+    component: web
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: lumina-ai
+      component: web
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: lumina-ai
+        component: web
+    spec:
+      containers:
+      - name: lumina-web
+        image: lumina-ai/web:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "400m"
+            memory: "512Mi"
+        env:
+        - name: LUMINA_API_URL
+          value: "http://lumina-core-service:8000"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5

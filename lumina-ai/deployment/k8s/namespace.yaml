@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: lumina-ai
+  labels:
+    name: lumina-ai
+    app: lumina-ai

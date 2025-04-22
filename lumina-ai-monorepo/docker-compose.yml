@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # Core service - handles orchestration and API gateway
+  lumina-core:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - LUMINA_ENV=production
+      - LUMINA_LOG_LEVEL=info
+      - LUMINA_PROVIDERS_URL=http://lumina-providers:8001
+      - LUMINA_MEMORY_URL=http://lumina-memory:8002
+      - LUMINA_SECURITY_URL=http://lumina-security:8003
+    volumes:
+      - core_data:/app/data
+    depends_on:
+      - lumina-providers
+      - lumina-memory
+      - lumina-security
+    restart: unless-stopped
+
+  # Providers service - handles AI provider integration
+  lumina-providers:
+    build:
+      context: ./providers
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      - LUMINA_ENV=production
+      - LUMINA_LOG_LEVEL=info
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - GROK_API_KEY=${GROK_API_KEY}
+    volumes:
+      - providers_data:/app/data
+    restart: unless-stopped
+
+  # Memory service - handles vector storage and context management
+  lumina-memory:
+    build:
+      context: ./memory
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - LUMINA_ENV=production
+      - LUMINA_LOG_LEVEL=info
+      - VECTOR_DB_HOST=${VECTOR_DB_HOST:-localhost}
+      - VECTOR_DB_PORT=${VECTOR_DB_PORT:-6333}
+    volumes:
+      - memory_data:/app/data
+    restart: unless-stopped
+
+  # Security service - handles authentication and authorization
+  lumina-security:
+    build:
+      context: ./security
+      dockerfile: Dockerfile
+    ports:
+      - "8003:8003"
+    environment:
+      - LUMINA_ENV=production
+      - LUMINA_LOG_LEVEL=info
+      - LUMINA_AUTH_SECRET=${LUMINA_AUTH_SECRET}
+      - LUMINA_ENCRYPTION_KEY=${LUMINA_ENCRYPTION_KEY}
+    volumes:
+      - security_data:/app/data
+    restart: unless-stopped
+
+  # Web UI service - serves the React frontend
+  lumina-web:
+    build:
+      context: ./ui/web
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    environment:
+      - LUMINA_API_URL=http://lumina-core:8000
+    depends_on:
+      - lumina-core
+    restart: unless-stopped
+
+volumes:
+  core_data:
+  providers_data:
+  memory_data:
+  security_data:

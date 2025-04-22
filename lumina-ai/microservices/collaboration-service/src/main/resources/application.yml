@@ -1,0 +1,90 @@
+spring:
+  application:
+    name: collaboration-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lumina_collaboration
+    username: lumina
+    password: lumina_password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: collaboration-service
+      auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterAccess=600s
+  task:
+    execution:
+      pool:
+        core-size: 10
+        max-size: 50
+        queue-capacity: 100
+      thread-name-prefix: collab-task-
+server:
+  port: 8087
+  servlet:
+    context-path: /
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+collaboration:
+  team:
+    max-size: 10
+    formation-timeout-ms: 5000
+    dynamic-formation:
+      enabled: true
+      capability-match-threshold: 0.75
+      performance-weight: 0.6
+      specialization-weight: 0.4
+  negotiation:
+    max-rounds: 10
+    timeout-ms: 15000
+    conflict-resolution:
+      strategy: PRIORITY_BASED
+      fallback-strategy: COMPROMISE
+    resource-allocation:
+      optimization-enabled: true
+  shared-context:
+    sync-interval-ms: 500
+    max-size-mb: 200
+    memory-integration:
+      enabled: true
+      compression-enabled: true
+      persistent-memory-enabled: true
+  workflow:
+    max-concurrent: 100
+    default-timeout-ms: 60000
+    dynamic-orchestration: true
+  memory:
+    service-url: http://memory-service:8086
+    context-compression-threshold: 5000
+    max-context-size: 10000

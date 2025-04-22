@@ -1,0 +1,55 @@
+server:
+  port: 8001
+
+spring:
+  application:
+    name: streaming-service
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth.lumina-ai.com}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  level:
+    root: INFO
+    ai.lumina: DEBUG
+
+# Provider API configurations
+openai:
+  api:
+    url: ${OPENAI_API_URL:https://api.openai.com}
+    key: ${OPENAI_API_KEY:}
+
+claude:
+  api:
+    url: ${CLAUDE_API_URL:https://api.anthropic.com}
+    key: ${CLAUDE_API_KEY:}
+
+gemini:
+  api:
+    url: ${GEMINI_API_URL:https://generativelanguage.googleapis.com}
+    key: ${GEMINI_API_KEY:}

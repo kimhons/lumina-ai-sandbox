@@ -1,0 +1,63 @@
+server:
+  port: 8084
+  servlet:
+    context-path: /api/ui
+
+spring:
+  application:
+    name: ui-service
+  datasource:
+    url: jdbc:postgresql://postgres:5432/luminadb
+    username: lumina
+    password: luminapassword
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://auth-service:8081/api/auth
+          jwk-set-uri: http://auth-service:8081/api/auth/.well-known/jwks.json
+
+# WebSocket configuration
+websocket:
+  allowed-origins: "*"
+  endpoint: /ws
+  collaboration-topic: /topic/collaboration
+  user-destination-prefix: /user
+
+# Adaptive UI configuration
+adaptive-ui:
+  notification:
+    default-timeout: 5000
+    max-notifications: 5
+  collaboration:
+    session-timeout: 1800000
+    max-participants: 10
+  preferences:
+    storage-location: /data/preferences
+    default-theme: light
+
+# Monitoring and metrics
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging configuration
+logging:
+  level:
+    root: INFO
+    ai.lumina: DEBUG
+    org.springframework.web: INFO
+    org.springframework.security: INFO

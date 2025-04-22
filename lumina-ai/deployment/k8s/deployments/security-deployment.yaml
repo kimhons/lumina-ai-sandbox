@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lumina-security-deployment
+  namespace: lumina-ai
+  labels:
+    app: lumina-ai
+    component: security
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lumina-ai
+      component: security
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: lumina-ai
+        component: security
+    spec:
+      containers:
+      - name: lumina-security
+        image: lumina-ai/security:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8003
+        resources:
+          requests:
+            cpu: "300m"
+            memory: "512Mi"
+          limits:
+            cpu: "600m"
+            memory: "1Gi"
+        envFrom:
+        - configMapRef:
+            name: lumina-ai-config
+        - secretRef:
+            name: lumina-ai-secrets
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8003
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: security-data
+          mountPath: /app/data
+      volumes:
+      - name: security-data
+        persistentVolumeClaim:
+          claimName: security-data-pvc

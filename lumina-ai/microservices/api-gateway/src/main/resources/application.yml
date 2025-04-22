@@ -1,0 +1,189 @@
+server:
+  port: 8000
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: provider-service
+          uri: lb://provider-service
+          predicates:
+            - Path=/api/providers/**
+          filters:
+            - RewritePath=/api/providers/(?<segment>.*), /providers/$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: providerServiceCircuitBreaker
+                fallbackUri: forward:/fallback/provider-service
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+        
+        - id: memory-service
+          uri: lb://memory-service
+          predicates:
+            - Path=/api/memory/**
+          filters:
+            - RewritePath=/api/memory/(?<segment>.*), /memory/$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: memoryServiceCircuitBreaker
+                fallbackUri: forward:/fallback/memory-service
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+        
+        - id: security-service
+          uri: lb://security-service
+          predicates:
+            - Path=/api/auth/**, /api/rbac/**
+          filters:
+            - RewritePath=/api/(?<segment>.*), /$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: securityServiceCircuitBreaker
+                fallbackUri: forward:/fallback/security-service
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
+        
+        - id: ui-service
+          uri: lb://ui-service
+          predicates:
+            - Path=/api/visualizations/**, /api/documents/**
+          filters:
+            - RewritePath=/api/(?<segment>.*), /$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: uiServiceCircuitBreaker
+                fallbackUri: forward:/fallback/ui-service
+        
+        - id: tool-service
+          uri: lb://tool-service
+          predicates:
+            - Path=/api/tools/**
+          filters:
+            - RewritePath=/api/tools/(?<segment>.*), /tools/$\{segment}
+            - name: CircuitBreaker
+              args:
+                name: toolServiceCircuitBreaker
+                fallbackUri: forward:/fallback/tool-service
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 5
+                redis-rate-limiter.burstCapacity: 10
+                key-resolver: "#{@userKeyResolver}"
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:https://auth.lumina-ai.com}
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+  instance:
+    preferIpAddress: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      providerServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      memoryServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      securityServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      uiServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+      toolServiceCircuitBreaker:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+  
+  timelimiter:
+    instances:
+      providerServiceCircuitBreaker:
+        timeoutDuration: 5s
+      memoryServiceCircuitBreaker:
+        timeoutDuration: 5s
+      securityServiceCircuitBreaker:
+        timeoutDuration: 3s
+      uiServiceCircuitBreaker:
+        timeoutDuration: 3s
+      toolServiceCircuitBreaker:
+        timeoutDuration: 10s
+
+logging:
+  level:
+    root: INFO
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: DEBUG
+    ai.lumina: DEBUG

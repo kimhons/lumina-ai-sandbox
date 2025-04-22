@@ -1,0 +1,56 @@
+groups:
+  - name: lumina_alerts
+    rules:
+      - alert: HighCpuUsage
+        expr: avg by(instance) (rate(process_cpu_seconds_total[5m]) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected ({{ $value }}%)"
+          description: "CPU usage is above 80% for 5 minutes on {{ $labels.instance }}"
+
+      - alert: HighMemoryUsage
+        expr: (sum by(instance) (jvm_memory_used_bytes) / sum by(instance) (jvm_memory_max_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected ({{ $value }}%)"
+          description: "Memory usage is above 85% for 5 minutes on {{ $labels.instance }}"
+
+      - alert: HighApiLatency
+        expr: http_server_requests_seconds_sum / http_server_requests_seconds_count > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API latency detected ({{ $value }}s)"
+          description: "Average API response time is above 1 second for 5 minutes on {{ $labels.instance }}"
+
+      - alert: HighErrorRate
+        expr: sum(rate(http_server_requests_seconds_count{status=~"5.."}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected ({{ $value }}%)"
+          description: "Error rate is above 5% for 5 minutes"
+
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute"
+
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, sum(rate(hikaricp_connection_usage_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected ({{ $value }}s)"
+          description: "95th percentile of database query time is above 0.5 seconds for 5 minutes"

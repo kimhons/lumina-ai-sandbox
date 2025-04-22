@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: monitoring-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/lumina_monitoring
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: false
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+  sleuth:
+    sampler:
+      probability: 1.0
+  zipkin:
+    base-url: http://jaeger:9411
+
+server:
+  port: 8085
+  servlet:
+    context-path: /
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.9, 0.95, 0.99
+      sla:
+        http.server.requests: 50ms, 100ms, 200ms, 500ms, 1s
+
+logging:
+  level:
+    root: INFO
+    ai.lumina: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} [%X{requestId}] - %msg%n"
+  file:
+    name: /var/log/lumina-ai/monitoring-service.log
+
+opentracing:
+  jaeger:
+    enabled: true
+    service-name: ${spring.application.name}
+    udp-sender:
+      host: jaeger
+      port: 6831
+    log-spans: true
+    probabilistic-sampler:
+      sampling-rate: 1.0
